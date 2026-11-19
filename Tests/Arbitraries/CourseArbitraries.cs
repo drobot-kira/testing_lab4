@@ -4,24 +4,33 @@ using Online_Course_Enrollment_System_Properties.Domain;
 
 namespace Online_Course_Enrollment_System_Properties.Tests.Arbitraries
 {
-    // Зразки з проєкту лекції: FuelTankGen (залежні значення), VehicleGen (генератор з генератора).
     public static class CourseArbitraries
     {
-        // Student: Id — непорожній рядок, напр. Gen.Choose(1, 20).Select(n => $"S{n}").
-        // Невеликий діапазон робить збіги Id частими — це корисно для правила
-        // «один студент не записується двічі».
+        private const string StudentPrefix = "S";
+        private const string CoursePrefix = "C";
+
         public static Arbitrary<Student> Student()
         {
-            throw new NotImplementedException();
+            var idGen = Gen.Choose(1, 20).Select(n => $"{StudentPrefix}{n}");
+            var studentGen = from id in idGen
+                select new Student(id);
+
+            return Arb.From(studentGen);
         }
 
-        // Course: Id — непорожній рядок, Capacity >= 1. Включіть граничний випадок Capacity = 1.
         public static Arbitrary<Course> Course()
         {
-            throw new NotImplementedException();
-        }
+            var idGen = Gen.Choose(1, 20).Select(n => $"{CoursePrefix}{n}");
+            var capacityGen = Gen.Frequency(
+                (3, Gen.Constant(1)),
+                (2, Gen.Constant(2)),
+                (5, Gen.Choose(1, 30)));
 
-        // Масив студентів (Student[]) окремо писати не потрібно:
-        // FsCheck сам побудує його з генератора Student(), як Vehicle[] у тестах автопарку (FleetPropertyTests).
+            var courseGen = from id in idGen
+                from capacity in capacityGen
+                select new Course(id, capacity);
+
+            return Arb.From(courseGen);
+        }
     }
 }
